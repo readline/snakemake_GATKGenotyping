@@ -1,0 +1,14 @@
+__default__:
+    partition: norm
+    time: "4-24:00:00"
+    extra: "--gres=lscratch:20"
+    
+GenomicsDBImport:
+    extra: "--gres=lscratch:50"
+
+Genotyping:
+    extra: "--gres=lscratch:200"
+
+Annotation:
+    extra: "--gres=lscratch:50"
+

@@ -13,7 +13,7 @@ workdir: config['workdir']
 rule all:
     input:
         #"Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz",
-        "Genotype/Merge.flt.vqsr.vcf.gz",
+        "Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz",
 
         
 rule GenomicsDBImport:
@@ -24,9 +24,13 @@ rule GenomicsDBImport:
         itvvcf=temp("Genotype/VQSR/Merge.itv_{itv}.vcf.gz"),
         itvmf=temp("Genotype/VQSR/Merge.itv_{itv}.mf.vcf.gz"),
         itvflt="Genotype/VQSR/Merge.itv_{itv}.flt.vcf.gz"
+    log:
+        out="logs/A1.GenomicsDBImport.{itv}.log",
+        err="logs/A1.GenomicsDBImport.{itv}.err"
+    message: "Running GenomicsDBImport of interval {wildcards.itv}."
     threads:  4
     resources:
-        mem  = 16
+        mem  = 32*1024
     run:
         inputs = " ".join("-V {}".format(f) for f in snakemake.input.gvcf)
         shell(
@@ -62,7 +66,7 @@ rule GenomicsDBImport:
         )
         
         
-rule genotyping:
+rule Genotyping:
     input:
         itvs=lambda wildcards: \
              ["Genotype/VQSR/Merge.itv_{}.flt.vcf.gz".format(itv) for itv in range(1, config['references']['interval']+1)]
@@ -74,9 +78,13 @@ rule genotyping:
         snvtranch="Genotype/VQSR/Merge.flt.snv.tranches",
         indrecal="Genotype/VQSR/Merge.flt.tmp.indel.recalibrated.vcf.gz",
         vqsr="Genotype/Merge.flt.vqsr.vcf.gz"
+    log:
+        out="logs/A2.Genotyping.log",
+        err="logs/A2.Genotyping.err"
     threads:  4
     resources:
-        mem  = 16,
+        mem  = 50*1024
+    message: "Running Genotyping."
     run:
         inputs = " ".join("--INPUT {}".format(i) for i in snakemake.input.itvs)
         shell(
@@ -144,3 +152,24 @@ rule genotyping:
             -mode SNP
         """
         )
+        
+        
+rule Annotation:
+    input:
+        "Genotype/Merge.flt.vqsr.vcf.gz"
+    output:
+        result="Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz"
+    log:
+        out="logs/A3.Annotation.log",
+        err="logs/A3.Annotation.err"
+    threads:  48
+    resources:
+        mem  = 100*1024
+    message: "Running Annotation."
+    shell:
+        """
+        {config[bins][vcfanno]} \
+            {input} \
+            `dirname {output.result}` \
+            {threads} n
+        """
