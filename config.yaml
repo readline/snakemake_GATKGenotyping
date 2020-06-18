@@ -30,3 +30,8 @@ modules:
 bins:
     vcfanno: /data/yuk5/pipeline/vcf_annotation/vcf_annotation.v1.wxs.py
 simg:
+
+max-jobs-per-second: 1
+latency-wait: 120
+keep-going: true
+cluster: 'sbatch -c {threads} --mem={resources.mem_mb} --partition={cluster.partition} --time={cluster.time} {cluster.extra}'

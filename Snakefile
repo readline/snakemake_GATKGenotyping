@@ -3,7 +3,6 @@ import pandas as pd
 import yaml
 
 configfile: 'config.yaml'
-print(config)
 
 with open(config['samplesheet']) as infile:
     gvcflist = [i.strip() for i in infile.readlines()]
@@ -12,7 +11,6 @@ workdir: config['workdir']
 
 rule all:
     input:
-        #"Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz",
         "Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz",
 
         
