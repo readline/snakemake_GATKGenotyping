@@ -1,0 +1,4 @@
+example/
+.ipynb_checkpoints
+.snakemake
+*/.ipynb_checkpoints
