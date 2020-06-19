@@ -23,9 +23,10 @@ references:
     gatk_1000hc: /data/yuk5/pipeline/wgs_germline/ref/gatk_bundle_hg38_v0/1000G_phase1.snps.high_confidence.hg38.vcf.gz
     
 modules:
-    picard: picard/2.17.11
+    picard: picard/2.22.2
     gatk: GATK/4.0.8.1
-    bedtools: bedtools
+    bedtools: bedtools/2.29.2
+    samtools: samtools/1.9
 
 bins:
     vcfanno: /data/yuk5/pipeline/vcf_annotation/vcf_annotation.v1.wxs.py
