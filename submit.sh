@@ -7,4 +7,4 @@ sbcmd+=" --out={log.out} --error={log.err} {cluster.extra}"
 
 snakemake -pr --keep-going --local-cores 4 \
         --jobs 50 --cluster-config cluster.yaml --cluster "$sbcmd" \
-            --latency-wait 120 all
+            --latency-wait 120 all --configfile config.yaml --snakefile Snakefile
