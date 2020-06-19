@@ -30,15 +30,15 @@ rule GenomicsDBImport:
     resources:
         mem  = 32*1024
     run:
-        inputs = " ".join("-V {}".format(f) for f in snakemake.input.gvcf)
+        inputs = " ".join("-V {}".format(f) for f in input.gvcf)
         shell(
         """
         module load {config[modules][gatk]}
         gatk --java-options "-Xmx4g -Xms4g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GenomicsDBImport \
             {inputs} \
-            -L /data/yuk5/pipeline/wxs_phase1/ref/IDT_xGen_Exome_Research_Panel/hg38/intervals_withflank150/hg38.xGen.{itv}.bed \
-            --genomicsdb-workspace-path /lscratch/$SLURM_JOB_ID/gdb.itv_{itv} &&
+            -L {input.bed} \
+            --genomicsdb-workspace-path /lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv}
         gatk --java-options "-Xmx5g -Xms5g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GenotypeGVCFs \
             -R {config[references][fasta]} \
@@ -47,8 +47,9 @@ rule GenomicsDBImport:
             -G StandardAnnotation \
             --only-output-calls-starting-in-intervals \
             --use-new-qual-calculator \
-            -V gendb:///lscratch/$SLURM_JOB_ID/gdb.itv_3 \
-            -L /data/yuk5/pipeline/wxs_phase1/ref/IDT_xGen_Exome_Research_Panel/hg38/intervals_withflank150/hg38.xGen.{itv}.bed &&
+            -V gendb:///lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv} \
+            -L {input.bed} 
+        rm -rf /lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv}
         gatk --java-options "-Xmx3g -Xms3g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             VariantFiltration \
             --filter-expression "ExcessHet>54.69" \
@@ -84,14 +85,14 @@ rule Genotyping:
         mem  = 50*1024
     message: "Running Genotyping."
     run:
-        inputs = " ".join("--INPUT {}".format(i) for i in snakemake.input.itvs)
+        inputs = " ".join("--INPUT {}".format(i) for i in input.itvs)
         shell(
         """
         module load {config[modules][gatk]} {config[modules][samtools]}
         
         gatk --java-options "-Xmx3g -Xms3g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GatherVcfs \
-            {inputs}
+            {inputs} \
             --OUTPUT {output.mvcf1}
             
         tabix -p vcf {output.mvcf1}
