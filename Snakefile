@@ -1,17 +1,29 @@
+# Version 1.0
+# 200618
+# Kai Yu
 from os.path import join
 import pandas as pd
 import yaml
 
 configfile: 'config.yaml'
+print('='*80)
+print('Analysis configs:')
+for i in config:
+    print('%s:\t%s'%(i,config[i]))
+print('='*80)
+
 
 with open(config['samplesheet']) as infile:
     gvcflist = [i.strip() for i in infile.readlines()]
 
 workdir: config['workdir']
 
+    
 rule all:
     input:
         "Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz",
+    shell:
+        "rm -rf VQSR"
 
         
 rule GenomicsDBImport:
@@ -34,11 +46,13 @@ rule GenomicsDBImport:
         shell(
         """
         module load {config[modules][gatk]}
+        
         gatk --java-options "-Xmx4g -Xms4g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GenomicsDBImport \
             {inputs} \
             -L {input.bed} \
             --genomicsdb-workspace-path /lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv}
+            
         gatk --java-options "-Xmx5g -Xms5g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GenotypeGVCFs \
             -R {config[references][fasta]} \
@@ -49,13 +63,16 @@ rule GenomicsDBImport:
             --use-new-qual-calculator \
             -V gendb:///lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv} \
             -L {input.bed} 
+            
         rm -rf /lscratch/$SLURM_JOB_ID/gdb.itv_{wildcards.itv}
+        
         gatk --java-options "-Xmx3g -Xms3g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             VariantFiltration \
             --filter-expression "ExcessHet>54.69" \
             --filter-name ExcessHet \
             -V {output.itvvcf} \
             -O {output.itvmf}
+            
         gatk --java-options "-Xmx3g -Xms3g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             SelectVariants \
             --exclude-filtered \
@@ -89,7 +106,6 @@ rule Genotyping:
         shell(
         """
         module load {config[modules][gatk]} {config[modules][samtools]}
-        
         gatk --java-options "-Xmx3g -Xms3g -Djava.io.tmpdir=/lscratch/$SLURM_JOB_ID" \
             GatherVcfs \
             {inputs} \
