@@ -22,6 +22,9 @@ workdir: config['workdir']
 rule all:
     input:
         "Genotype/Merge.flt.vqsr.vcf.anno/Merge.Anno.matrix.gz",
+    threads:  1
+    resources:
+        mem  = 1*1024
     shell:
         "rm -rf VQSR"
 
